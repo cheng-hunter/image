@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: test-sts
+  namespace: 2d19e702a8ee11ebbe196c92bf6923e5
+spec:
+  serviceName: ""
+  replicas: 5
+  selector:
+    matchLabels:
+      app: test-sts
+  template:
+    metadata:
+      labels:
+        app: test-sts
+      name: test-sts
+      namespace: 2d19e702a8ee11ebbe196c92bf6923e5
+    spec:
+      affinity:
+        podAntiAffinity:                     #反亲和
+           requiredDuringSchedulingIgnoredDuringExecution:
+             - labelSelector:
+                 matchExpressions:
+                   - key: app
+                     operator: In
+                     values:
+                       - test-sts
+               topologyKey: kubernetes.io/hostname
+      containers:
+        - env:
+            - name: pod_name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          image: guiyang-registry.sit.sf-express.com:5000/cloud-area-harbor-nginx-ltest:2022011815293215
+          imagePullPolicy: IfNotPresent
+          name: test
+          ports:
+            - containerPort: 80
+              name: tcp-80
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "10"
+              memory: 20Gi
+            requests:
+              cpu: 200m
+              memory: 4Mi
+      imagePullSecrets:
+        - name: guiyang-registry.sit.sf-express.com-5000-cloud-area-harbor-nginx-ltest
+      nodeSelector:
+        areacode: 2d19e702a8ee11ebbe196c92bf6923e5
+        cpuarch: amd64
+        gpumodel: ""
+        os: CentOS8
+        systemcode: CLOUD-AREA-HARBOR
+      restartPolicy: Always
+---
+apiVersion: v1             #API的版本号，版本号可以用 kubectl api-versions 查询到
+kind: Service              #表明资源对象，例如Pod、RC、Service、Namespace及Node等
+metadata:                  #资源对象的元数据定义
+  name: test-sts        #service名称
+  namespace: 2d19e702a8ee11ebbe196c92bf6923e5
+spec:                      #资源对象的详细定义，持久化到etcd中保存
+  type: ClusterIP          #Service类型，ClusterIP供kubernates集群内部pod访问
+  ports:                   #暴露的端口列表
+    - port: 80             #Service监听的端口，对应ClusterIP，即ClusterIP+ServicePort供集群内部pod访问的
+      targetPort: 80       #对应pod中容器的端口
+      protocol: TCP          #协议，支持TCP、UDP，默认TCP
+      name: http             #端口名称
+  selector:                  #label选择器，管理label对应的pod
+    app: test-sts

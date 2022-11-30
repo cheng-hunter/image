@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-cm
+  namespace: 2d19e702a8ee11ebbe196c92bf6923e5
+data:
+  # 属性键；每一个键都映射到一个简单的值
+  connection_count: "3"
+  config_file: "test.properties"
+  # 文件键
+  test.properties: |
+    max_connection=20
+    connection_url=https://kubernetes.io/
